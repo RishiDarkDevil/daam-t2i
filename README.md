@@ -1,8 +1,10 @@
-# What the DAAM: Interpreting Stable Diffusion Using Cross Attention
+# DAAM-Text2Image: Extension of DAAM for Text-Image Cross-Attention in Diffusion Models
 
 [![HF Spaces](https://img.shields.io/badge/HuggingFace%20Space-online-green.svg)](https://huggingface.co/spaces/tetrisd/Diffusion-Attentive-Attribution-Maps) [![Citation](https://img.shields.io/badge/Citation-arXiv-orange.svg)](https://gist.githubusercontent.com/daemon/c526f4f9ab2d5e946e6bae90a9a02571/raw/02dcc6cb09a39559b39449a7d27d3b950bec39bd/daam-citation.bib) [![PyPi version](https://badgen.net/pypi/v/daam?color=blue)](https://pypi.org/project/daam) [![Downloads](https://static.pepy.tech/badge/daam)](https://pepy.tech/project/daam)
 
 ![example image](example.jpg)
+
+This is an extension for the original DAAM implementation to deal with text-image heatmaps with better control over the diffusion model.
 
 ### Updated to support Stable Diffusion V2.1!
 
