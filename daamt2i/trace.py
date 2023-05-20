@@ -110,21 +110,28 @@ class DiffusionHeatMapHooker(AggregateHooker):
                 if factor in factors and (head_idx is None or head_idx == head) and (layer_idx is None or layer_idx == layer):
                     heat_map = heat_map.unsqueeze(1)
                     # The clamping fixes undershoot.
-                    all_merges.append(F.interpolate(heat_map, size=(x, x), mode='bicubic').clamp_(min=0))
+                    if len(factors) > 1:
+                        all_merges.append(F.interpolate(heat_map, size=(x, x), mode='bicubic').clamp_(min=0))
+                    else:
+                        all_merges.append(heat_map)
 
             try:
-                maps = torch.stack(all_merges, dim=0)
+                maps = torch.zeros_like(all_merges[0])
+                # maps = torch.stack(all_merges, dim=0)
+                for map in all_merges:
+                    maps += map
             except RuntimeError:
                 if head_idx is not None or layer_idx is not None:
                     raise RuntimeError('No heat maps found for the given parameters.')
                 else:
                     raise RuntimeError('No heat maps found. Did you forget to call `with trace(...)` during generation?')
 
-            maps = maps.mean(0)[:, 0]
-            maps = maps[:len(self.pipe.tokenizer.tokenize(prompt)) + 2]  # 1 for SOS and 1 for padding
+            # maps = maps.mean(0)[:, 0]
+            maps = maps / len(all_merges)
+            maps = maps[:, 0]
 
             if normalize:
-                maps = maps / (maps[1:-1].sum(0, keepdim=True) + 1e-6)  # drop out [SOS] and [PAD] for proper probabilities
+                maps = maps / (maps.sum(0, keepdim=True) + 1e-6)  # drop out [SOS] and [PAD] for proper probabilities
 
         return GlobalHeatMap(self.pipe.tokenizer, prompt, maps)
 
