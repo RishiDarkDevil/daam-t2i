@@ -3,7 +3,7 @@ diffusers==0.9.0
 spacy
 gradio
 ftfy
-transformers==4.24.0
+transformers @ git+https://github.com/huggingface/transformers@v4.29.2
 pandas
 numba
 nltk
