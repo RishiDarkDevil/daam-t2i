@@ -3,9 +3,9 @@ import setuptools
 setuptools.setup(
     name='daam',
     version=eval(open('daam/_version.py').read().strip().split('=')[1]),
-    author='Raphael Tang',
+    author='RishiDarkDevil',
     license='MIT',
-    url='https://github.com/castorini/daam',
+    url='https://github.com/RishiDarkDevil/daam-t2i',
     author_email='r33tang@uwaterloo.ca',
     description='What the DAAM: Interpreting Stable Diffusion Using Cross Attention.',
     install_requires=open('requirements.txt').read().strip().splitlines(),
