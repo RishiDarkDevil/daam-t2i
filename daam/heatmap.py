@@ -17,18 +17,40 @@ from .utils import compute_token_merge_indices, cached_nlp, auto_autocast
 __all__ = ['GlobalHeatMap', 'RawHeatMapCollection', 'WordHeatMap', 'ParsedHeatMap', 'SyntacticHeatMapPair']
 
 
-def plot_overlay_heat_map(im, heat_map, figsize: Tuple[int, int] = (10,10)):
-    # type: (PIL.Image.Image | np.ndarray, torch.Tensor) -> None
+def plot_overlay_heat_map(im, heat_map, word=None, out_file=None, crop=None, color_normalize=True, ax=None):
+    # type: (PIL.Image.Image | np.ndarray, torch.Tensor, str, Path, int, bool, plt.Axes) -> None
+    if ax is None:
+        plt.clf()
+        plt.rcParams.update({'font.size': 24})
+        plt_ = plt
+    else:
+        plt_ = ax
 
     with auto_autocast(dtype=torch.float32):
-        plt.figure(figsize=figsize)
-        plt.axis('off')
         im = np.array(im)
-        plt.imshow(heat_map.squeeze().cpu().numpy(), cmap='jet')
+
+        if crop is not None:
+            heat_map = heat_map.squeeze()[crop:-crop, crop:-crop]
+            im = im[crop:-crop, crop:-crop]
+
+        if color_normalize:
+            plt_.imshow(heat_map.squeeze().cpu().numpy(), cmap='jet')
+        else:
+            heat_map = heat_map.clamp_(min=0, max=1)
+            plt_.imshow(heat_map.squeeze().cpu().numpy(), cmap='jet', vmin=0.0, vmax=1.0)
 
         im = torch.from_numpy(im).float() / 255
         im = torch.cat((im, (1 - heat_map.unsqueeze(-1))), dim=-1)
-        plt.imshow(im)
+        plt_.imshow(im)
+
+        if word is not None:
+            if ax is None:
+                plt.title(word)
+            else:
+                ax.set_title(word)
+
+        if out_file is not None:
+            plt.savefig(out_file)
 
 
 class WordHeatMap:
@@ -41,19 +63,33 @@ class WordHeatMap:
     def value(self):
         return self.heatmap
 
-    def plot_overlay(self, image, figsize: Tuple[int, int] = (10,10)):
+    def plot_overlay(self, image, out_file=None, color_normalize=True, ax=None, **expand_kwargs):
         # type: (PIL.Image.Image | np.ndarray, Path, bool, plt.Axes, Dict[str, Any]) -> None
-        plot_overlay_heat_map(image, self.expand_as(image), figsize)
+        plot_overlay_heat_map(
+            image,
+            self.expand_as(image, **expand_kwargs),
+            word=self.word,
+            out_file=out_file,
+            color_normalize=color_normalize,
+            ax=ax
+        )
 
-    def expand_as(self, image):
+    def expand_as(self, image, absolute=False, threshold=None, plot=False, **plot_kwargs):
         # type: (PIL.Image.Image, bool, float, bool, Dict[str, Any]) -> torch.Tensor
-
         im = self.heatmap.unsqueeze(0).unsqueeze(0)
         im = F.interpolate(im.float().detach(), size=(image.size[0], image.size[1]), mode='bicubic')
-        im = im[0,0]
-        im = (im - im.min()) / (im.max() - im.min() + 1e-8)
+
+        if not absolute:
+            im = (im - im.min()) / (im.max() - im.min() + 1e-8)
+
+        if threshold:
+            im = (im > threshold).float()
+
         im = im.cpu().detach().squeeze()
-        
+
+        if plot:
+            self.plot_overlay(image, **plot_kwargs)
+
         return im
 
     def compute_ioa(self, other: 'WordHeatMap'):
