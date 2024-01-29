@@ -1,7 +1,7 @@
 import setuptools
 
 setuptools.setup(
-    name='daam',
+    name='daamt2i',
     version=eval(open('daam/_version.py').read().strip().split('=')[1]),
     author='RishiDarkDevil',
     license='MIT',
